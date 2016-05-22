@@ -5,15 +5,25 @@
 
 module.exports = function(app) {
 
+	var name = "Rahul";
+	var surname = "Bakolia";
+	var jsonResponse = JSON.stringify({
+			name : name,
+			surname : surname
+		});
+
 	var mongodb = require('mongodb');
-
 	var MongoClient = mongodb.MongoClient;
-
 	var url = 'mongodb://localhost:27017/stocks';
-
 	app.get('/', function(req,res) {
 			res.send("Hello bhai log");
 			});
+
+	app.get('/temp', function(req,res) {
+			res.writeHead(200, {"Content-Type": "application/json"});
+			res.end(jsonResponse);
+		});
+	
 	app.post('/oil', function(req,res) {
 
 				MongoClient.connect(url, function (err, db) {
