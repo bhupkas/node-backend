@@ -43,14 +43,12 @@ app.listen(process.env.PORT || 3000, function(){
 /* Calling function after regular intervals */
 
 setInterval(function() {
-
-  var mongodb = require('mongodb');
-  var MongoClient = mongodb.MongoClient;
-  var url = 'mongodb://localhost:27017/stocks';
-  var https = require('https');
+/*
+  
+  var http = require('http');
   var options = {
-    host : 'www.google.com',
-    path : '?q=sex'
+    host : 'stock-pricing.herokuapp.com',
+    path : '/temp'
   }
   callback = function(response) {
     console.log("Pel Pel ke");
@@ -64,7 +62,7 @@ setInterval(function() {
           var collection = db.collection('oil');
           var oil1 = {time: '1242435', price: 42.341431};
           var oil2 = {time: '2545645', price: 54.314134};
-          /*collection.insert([oil1,oil2], function (err, result) {
+          collection.insert([oil1,oil2], function (err, result) {
       if (err) {
         console.log(err);
       } else {
@@ -72,12 +70,88 @@ setInterval(function() {
       }
           console.log('Connection established to', url);
           db.close();
-         });*/
+         });
     }
   });
 
   }
 
-  https.request(options,callback).end();
+  http.request(options,callback).end();*/
   
+  /*var mongodb = require('mongodb');
+  var MongoClient = mongodb.MongoClient;
+  var url = 'mongodb://localhost:27017/stocks';*/
+  var http = require('http');  
+  var options = {
+  host: 'stock-pricing.herokuapp.com',
+  path: '/temp',
+  method: 'GET'
+};
+
+var req = http.request(options, function(res) {
+  //console.log('STATUS: ' + res.statusCode);
+  //console.log('HEADERS: ' + JSON.stringify(res.headers));
+  res.setEncoding('utf8');
+  res.on('data', function (resBody) {
+    var responseData = JSON.parse(resBody);
+    //console.log(responseData);
+    //console.log(responseData["name"]);
+    var StockPrice = require('./models/stockPrice');
+
+    var mongoose = require('mongoose');
+    var url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/stocks';
+    mongoose.connect(url);
+    var db = mongoose.connection;
+    db.on('error', console.error.bind(console, 'connection error:'));
+    db.once('open', function() {
+      console.log("We are connected");
+      var val = new StockPrice({
+          name : 'oil',
+          timeStamp : responseData["name"],
+          price : responseData["surname"]
+      });
+
+      val.save(function(err) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log("Successfully saved");
+          db.close();
+        }
+      });
+
+    });
+    //db.close();
+
+    /*MongoClient.connect(url, function (err, db) {
+      if (err) {
+          console.log('Unable to connect to the mongoDB server. Error:', err);
+      } else {
+          var collection = db.collection('oil');
+          var oil1 = {name: responseData["name"], surname: responseData["surname"]};
+          collection.insert([oil1], function (err, result) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log('Inserted %d documents into the "users" collection. The documents inserted with "_id" are:', result.length, result);
+      }
+          console.log('Connection established to', url);
+          db.close();
+         });
+    }
+  });*/
+
+
+  });
+  
+
+});
+
+req.on('error', function(e) {
+  console.log('problem with request: ' + e.message);
+});
+
+req.end();
+
+
 }, 1000);
