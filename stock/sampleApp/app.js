@@ -99,8 +99,11 @@ var req = http.request(options, function(res) {
     var StockPrice = require('./models/stockPrice');
 
     var mongoose = require('mongoose');
-    var url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/stocks';
+    var url = process.env.MONGODB_URI || 'mongodb://localhost:27017/stocks';
+    console.log(process.env.MONGODB_URI);
     mongoose.connect(url);
+    //var db = mongoose.connection;
+    //var db = mongojs('mongodb://admin:password@IP_ADDRESS/bot', [], { authMechanism : 'ScramSHA1' });
     var db = mongoose.connection;
     db.on('error', console.error.bind(console, 'connection error:'));
     db.once('open', function() {
@@ -154,4 +157,4 @@ req.on('error', function(e) {
 req.end();
 
 
-}, 1000);
+}, 1000000);
