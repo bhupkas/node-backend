@@ -1,8 +1,6 @@
-
 /**
  * Module dependencies.
  */
-
 var express = require('express')
   , routes = require('./routes');
 
@@ -26,135 +24,67 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler());
 });
-
-// Routes
-
-//app.get('/', routes.index);
-
-/* Getting routes from routes folder */
-
 require('./routes')(app);
 
-app.listen(process.env.PORT || 3000, function(){
-  console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
+
+var connection_string = '127.0.0.1:27017/stocks';
+if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
+  connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
+  process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
+  process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
+  process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
+  process.env.OPENSHIFT_APP_NAME;
+}
+
+var mongoose = require('mongoose');
+var url = 'mongodb://' + connection_string;
+
+mongoose.connect(url);
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+var StockPrice = require('./models/stockPrice')
+db.once('open', function() {
+  console.log("We are connected");
+  var val = new StockPrice({
+      name : 'oil',
+      timeStamp : "ABVC",
+      price : "wrf"
+  });
+
+  val.save(function(err) {
+    if(err) {
+      console.log(err);
+    } else {
+      console.log("Successfully saved");
+      db.close();
+    }
+  });
+
 });
 
-
-/* Calling function after regular intervals */
+app.listen(server_port, server_ip_address, function(){
+  console.log("Express server listening on port %d in %s mode", server_port, server_ip_address);
+});
 
 setInterval(function() {
-/*
-  
+
   var http = require('http');
+  // Voltas share price
   var options = {
-    host : 'stock-pricing.herokuapp.com',
-    path : '/temp'
-  }
-  callback = function(response) {
-    console.log("Pel Pel ke");
-    console.log(response);
-    //var jsonResponse = JSON.parse(response);
-    //console.log(jsonResponse);
-    MongoClient.connect(url, function (err, db) {
-      if (err) {
-          console.log('Unable to connect to the mongoDB server. Error:', err);
-      } else {
-          var collection = db.collection('oil');
-          var oil1 = {time: '1242435', price: 42.341431};
-          var oil2 = {time: '2545645', price: 54.314134};
-          collection.insert([oil1,oil2], function (err, result) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log('Inserted %d documents into the "users" collection. The documents inserted with "_id" are:', result.length, result);
-      }
-          console.log('Connection established to', url);
-          db.close();
-         });
-    }
-  });
+    host: 'https://www.google.co.in'
+    port: 80,
+    path: '/async/finance_price_updates?async=lang:en,country:in,rmids:%2Fg%2F1dv8nhll,_fmt:jspb&ei=yntJV9PuOsvbvAS6oIPwAQ&ion=1&espv=2&client=ubuntu&yv=2'
+  };
 
-  }
-
-  http.request(options,callback).end();*/
-  
-  /*var mongodb = require('mongodb');
-  var MongoClient = mongodb.MongoClient;
-  var url = 'mongodb://localhost:27017/stocks';*/
-  var http = require('http');  
-  var options = {
-  host: 'stock-pricing.herokuapp.com',
-  path: '/temp',
-  method: 'GET'
-};
-
-var req = http.request(options, function(res) {
-  //console.log('STATUS: ' + res.statusCode);
-  //console.log('HEADERS: ' + JSON.stringify(res.headers));
-  res.setEncoding('utf8');
-  res.on('data', function (resBody) {
-    var responseData = JSON.parse(resBody);
-    //console.log(responseData);
-    //console.log(responseData["name"]);
-    var StockPrice = require('./models/stockPrice');
-
-    var mongoose = require('mongoose');
-    var url = process.env.MONGODB_URI || 'mongodb://localhost:27017/stocks';
-    console.log(process.env.MONGODB_URI);
-    mongoose.connect(url);
-    //var db = mongoose.connection;
-    //var db = mongojs('mongodb://admin:password@IP_ADDRESS/bot', [], { authMechanism : 'ScramSHA1' });
-    var db = mongoose.connection;
-    db.on('error', console.error.bind(console, 'connection error:'));
-    db.once('open', function() {
-      console.log("We are connected");
-      var val = new StockPrice({
-          name : 'oil',
-          timeStamp : responseData["name"],
-          price : responseData["surname"]
-      });
-
-      val.save(function(err) {
-        if(err) {
-          console.log(err);
-        } else {
-          console.log("Successfully saved");
-          db.close();
-        }
-      });
-
+  http.get(options, function(resp){
+    resp.on('data', function(chunk){
+      //do something with chunk
     });
-    //db.close();
-
-    /*MongoClient.connect(url, function (err, db) {
-      if (err) {
-          console.log('Unable to connect to the mongoDB server. Error:', err);
-      } else {
-          var collection = db.collection('oil');
-          var oil1 = {name: responseData["name"], surname: responseData["surname"]};
-          collection.insert([oil1], function (err, result) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log('Inserted %d documents into the "users" collection. The documents inserted with "_id" are:', result.length, result);
-      }
-          console.log('Connection established to', url);
-          db.close();
-         });
-    }
-  });*/
-
-
-  });
-  
-
+  }).on("error", function(e){
+    console.log("Got error: " + e.message);
 });
 
-req.on('error', function(e) {
-  console.log('problem with request: ' + e.message);
-});
 
-req.end();
-
-
-}, 1000000);
+}, 1000);
