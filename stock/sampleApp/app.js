@@ -37,40 +37,57 @@ setInterval(function() {
   getDataFromGoogleApi('randomString', function(chunk) {
     parseGoogleData(chunk,function(res) {
       getDatabaseConnection(function(db) {
-        var StockPrice = require('./models/stockPrice')
+        var StockPrice = require('./models/stockPrice');
         db.once('open', function() {
-
-          StockPrice.findOne({ timeStamp: res["timeStamp"] }, function(err, thor) {
+          StockPrice.findOne({ timeStamp: res["timeStamp"] }, function(err, result) {
             if (err) return console.log(err);
-            console.log(thor);
-          });
-
-          //var query = StockPrice.findOne({'timeStamp':res["timeStamp"]});
-          //console.log(query.select('stockName'));
-          var val = new StockPrice({
-              stockName : res["stockName"],
-              currentVal : res["currentVal"],
-              absoluteVariation : res["absoluteVariation"],
-              percentageVariation : res["percentageVariation"],
-              timeStamp : res["timeStamp"],
-              url:'www.google.co.in/async/finance_price_updates?async=lang:en,country:in,rmids:%2Fg%2F1dv8nhll,_fmt:jspb&ei=yntJV9PuOsvbvAS6oIPwAQ&ion=1&espv=2&client=ubuntu&yv=2',
-              createdAt:Date.now(),
-              updatedAt:Date.now(),
-          });
-          val.save(function(err) {
-            if(err) {
-              console.log(err);
-            } else {
-              console.log("Successfully saved");
-              db.close();
+            if(result == null) {
+              var val = new StockPrice({
+                stockName : res["stockName"],
+                currentVal : res["currentVal"],
+                absoluteVariation : res["absoluteVariation"],
+                percentageVariation : res["percentageVariation"],
+                timeStamp : res["timeStamp"],
+                url:'www.google.co.in/async/finance_price_updates?async=lang:en,country:in,rmids:%2Fg%2F1dv8nhll,_fmt:jspb&ei=yntJV9PuOsvbvAS6oIPwAQ&ion=1&espv=2&client=ubuntu&yv=2',
+                createdAt:Date.now(),
+                updatedAt:Date.now(),
+              });
+              val.save(function(err) {
+                if(err) {
+                  console.log(err);
+                } else {
+                  console.log("Successfully saved");
+                }
+              });
             }
+            db.close();
           });
         });
       });
     });
   });
-}, 1000);
+}, 60*1000);
 
+// Todo : Calling batch process to clear the data
+
+/*setInterval(function() {
+  getDatabaseConnection(function(db) {
+    var StockPrice = require('./models/stockPrice');
+    StockPrice.find(function(err, stocks) {
+      if (err) return console.error(err);
+      console.dir(stocks);
+    });
+    StockPrice.remove(function(err,result) {
+      if(err) {
+        console.log(err);
+      } else {
+        console.log(result);
+      }
+    });
+    db.close();
+  });
+}, 60*60*1000);
+*/
 function getDataFromGoogleApi(url, callback) {
     var http = require('http');
     var options = {
@@ -128,3 +145,4 @@ function getDatabaseConnection(callback) {
   db.on('error', console.error.bind(console, 'connection error:'));
   callback(db);
 }
+
