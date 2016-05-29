@@ -88,3 +88,8 @@ setInterval(function() {
 
 
 }, 1000);
+
+
+function parseGoogleApi(url, callback) {
+
+}
