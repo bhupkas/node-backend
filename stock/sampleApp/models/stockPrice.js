@@ -2,11 +2,14 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var stockPricing = new Schema({
-  name: String,
-  timeStamp: String,
-  price:String,
-  created_at: Date,
-  updated_at: Date
+	stockName:String,
+	currentVal:String,
+	absoluteVariation:String,
+	percentageVariation:String,
+	timeStamp: String,
+	url:String,
+	createdAt: Date,
+	updatedAt: Date
 });
 
 // the schema is useless so far
