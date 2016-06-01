@@ -36,7 +36,7 @@ app.listen(server_port, server_ip_address, function(){
 setInterval(function() {
   getDataFromGoogleApi('randomString', function(chunk) {
     parseGoogleData(chunk,function(res) {
-      getDatabaseConnection(function(db) {
+        var db = require('./db');
         var StockPrice = require('./models/stockPrice');
         db.once('open', function() {
           StockPrice.findOne({ timeStamp: res["timeStamp"] }, function(err, result) {
@@ -63,10 +63,9 @@ setInterval(function() {
             db.close();
           });
         });
-      });
     });
   });
-}, 60*1000);
+}, 1000);
 
 // Todo : Calling batch process to clear the data
 
@@ -129,20 +128,4 @@ function parseGoogleData(data, callback) {
   callback(dict);
 }
 
-function getDatabaseConnection(callback) {
-  var connection_string = '127.0.0.1:27017/stocks';
-  if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
-    connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
-    process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
-    process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
-    process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
-    process.env.OPENSHIFT_APP_NAME;
-  }
-  var mongoose = require('mongoose');
-  var url = 'mongodb://' + connection_string;
-  mongoose.connect(url);
-  var db = mongoose.connection;
-  db.on('error', console.error.bind(console, 'connection error:'));
-  callback(db);
-}
 
